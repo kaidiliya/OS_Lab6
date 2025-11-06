@@ -1,8 +1,11 @@
 #include <stdio.h>
-
+#include <stdlib.h>
 #include "tasks_implem.h"
 #include "tasks_queue.h"
 #include "debug.h"
+#include <unistd.h>
+#include <pthread.h>
+#include "worker.h"
 
 tasks_queue_t *tqueue= NULL;
 
@@ -19,6 +22,13 @@ void delete_queues(void)
 
 void create_thread_pool(void)
 {
+    pthread_t tids[THREAD_COUNT];
+    for (int i=0;i<THREAD_COUNT;i++){
+        if (pthread_create(&tids[i], NULL, worker, NULL)) {
+            fprintf(stderr,"Failed to create the peruvian thread\n");
+            exit(0);
+        }
+    }
     return ;
 }
 

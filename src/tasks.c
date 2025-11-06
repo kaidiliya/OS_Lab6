@@ -1,14 +1,17 @@
 #include <stdlib.h>
-
+#include <unistd.h>
 #include "tasks.h"
 #include "tasks_implem.h"
 #include "debug.h"
 #include "utils.h"
+#include <pthread.h>
+#include "worker.h"
 
 system_state_t sys_state;
 
 __thread task_t *active_task;
-
+pthread_mutex_t mutex=PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond2=PTHREAD_COND_INITIALIZER;
 
 void runtime_init(void)
 {
@@ -70,6 +73,7 @@ task_t* create_task(task_routine_t f)
 
 void submit_task(task_t *t)
 {
+    
     t->status = READY;
 
 #ifdef WITH_DEPENDENCIES    
@@ -80,8 +84,14 @@ void submit_task(task_t *t)
         PRINT_DEBUG(100, "Dependency %u -> %u\n", active_task->task_id, t->task_id);
     }
 #endif
-    
+    pthread_mutex_lock(&mutex);
+    while(sys_state.task_counter==0){
+        pthread_cond_wait(&cond2,&mutex);
+    }
     dispatch_task(t);
+    pthread_cond_signal(&cond1);
+    pthread_mutex_unlock(&mutex);
+
 }
 
 

@@ -5,13 +5,16 @@
 #include "debug.h"
 #include "utils.h"
 #include <pthread.h>
-#include "worker.h"
 
 system_state_t sys_state;
 
 __thread task_t *active_task;
-pthread_mutex_t mutex=PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond2=PTHREAD_COND_INITIALIZER;
+pthread_mutex_t mutex2 =PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond2 =PTHREAD_COND_INITIALIZER;
+
+int submitted = 0;
+int finished = 0;
+
 
 void runtime_init(void)
 {
@@ -84,33 +87,23 @@ void submit_task(task_t *t)
         PRINT_DEBUG(100, "Dependency %u -> %u\n", active_task->task_id, t->task_id);
     }
 #endif
-    pthread_mutex_lock(&mutex);
-    while(sys_state.task_counter==0){
-        pthread_cond_wait(&cond2,&mutex);
-    }
+
+    pthread_mutex_lock(&mutex2);
+    submitted++;
+    pthread_mutex_unlock(&mutex2);
+
     dispatch_task(t);
-    pthread_cond_signal(&cond1);
-    pthread_mutex_unlock(&mutex);
 
 }
 
 
+
+
 void task_waitall(void)
 {
-    active_task = get_task_to_execute();
-
-    while(active_task != NULL){
-        task_return_value_t ret = exec_task(active_task);
-
-        if (ret == TASK_COMPLETED){
-            terminate_task(active_task);
-        }
-#ifdef WITH_DEPENDENCIES
-        else{
-            active_task->status = WAITING;
-        }
-#endif
-
-        active_task = get_task_to_execute();
+    pthread_mutex_lock(&mutex2);
+    while (finished < submitted) {
+        pthread_cond_wait(&cond2, &mutex2);
     }
+    pthread_mutex_unlock(&mutex2);
 }

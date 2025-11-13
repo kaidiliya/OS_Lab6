@@ -10,7 +10,7 @@ system_state_t sys_state;
 
 __thread task_t *active_task;
 pthread_mutex_t mutex2 =PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond2 =PTHREAD_COND_INITIALIZER;
+pthread_cond_t checkfinished =PTHREAD_COND_INITIALIZER;
 
 int submitted = 0;
 int finished = 0;
@@ -103,7 +103,7 @@ void task_waitall(void)
 {
     pthread_mutex_lock(&mutex2);
     while (finished < submitted) {
-        pthread_cond_wait(&cond2, &mutex2);
+        pthread_cond_wait(&checkfinished, &mutex2);
     }
     pthread_mutex_unlock(&mutex2);
 }

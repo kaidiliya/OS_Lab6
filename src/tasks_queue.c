@@ -5,8 +5,9 @@
 
 #include "tasks_queue.h"
 
-static pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t  cond1 = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t  emptyqueue = PTHREAD_COND_INITIALIZER;
+pthread_cond_t  fullqueue = PTHREAD_COND_INITIALIZER;
 
 
 
@@ -37,13 +38,12 @@ void free_tasks_queue(tasks_queue_t *q)
 void enqueue_task(tasks_queue_t *q, task_t *t)
 {
     pthread_mutex_lock(&mutex1);
-    if(q->index == q->task_buf_size){
-        fprintf(stderr,"ERROR: the queue of tasks is full\n");
-        exit(EXIT_FAILURE);
+    while(q->index == q->task_buf_size){
+       pthread_cond_wait(&fullqueue, &mutex1);
     }
     q->task_buffer[q->index] = t;
     q->index++;
-    pthread_cond_signal(&cond1);
+    pthread_cond_signal(&emptyqueue);
     pthread_mutex_unlock(&mutex1);
 }
 
@@ -52,9 +52,10 @@ task_t* dequeue_task(tasks_queue_t *q)
 {
     pthread_mutex_lock(&mutex1);
     while (q->index == 0) {
-        pthread_cond_wait(&cond1, &mutex1);
+        pthread_cond_wait(&emptyqueue, &mutex1);
     }
     task_t *t = q->task_buffer[--q->index]; // LIFO
+    pthread_cond_signal(&fullqueue);
     pthread_mutex_unlock(&mutex1);
     return t;
 }

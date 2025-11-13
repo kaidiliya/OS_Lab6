@@ -13,8 +13,8 @@ pthread_t tids[THREAD_COUNT];
 tasks_queue_t *tqueue= NULL;
 
 extern __thread task_t *active_task;
-extern pthread_mutex_t mutex;
-extern pthread_cond_t  cond2;
+extern pthread_mutex_t mutex1;
+extern pthread_cond_t  checkfinished;
 extern int submitted;
 extern int finished;
 
@@ -26,6 +26,11 @@ void * worker(void * arg){
         active_task = task;
 
 
+
+
+
+
+        
         task_return_value_t ret = exec_task(active_task);
         if (ret == TASK_COMPLETED){
                 terminate_task(active_task);
@@ -100,12 +105,12 @@ void terminate_task(task_t *t)
     }
 #endif
 
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(&mutex1);
     finished++;
     if (finished == submitted) {
-        pthread_cond_broadcast(&cond2);   // 或 pthread_cond_signal(&cond2);
+        pthread_cond_signal(&checkfinished);   // 或 pthread_cond_signal(&cond2);
     }
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&mutex1);
 
 
 }

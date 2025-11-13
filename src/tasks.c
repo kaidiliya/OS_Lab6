@@ -76,7 +76,7 @@ task_t* create_task(task_routine_t f)
 
 void submit_task(task_t *t)
 {
-    
+    pthread_mutex_lock(&mutex2);
     t->status = READY;
 
 #ifdef WITH_DEPENDENCIES    
@@ -88,7 +88,7 @@ void submit_task(task_t *t)
     }
 #endif
 
-    pthread_mutex_lock(&mutex2);
+    
     submitted++;
     pthread_mutex_unlock(&mutex2);
 

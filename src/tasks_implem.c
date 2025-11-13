@@ -5,6 +5,7 @@
 #include "debug.h"
 #include <unistd.h>
 #include <pthread.h>
+#include "tasks_io.h"
 
 
 
@@ -15,6 +16,7 @@ tasks_queue_t *tqueue= NULL;
 extern __thread task_t *active_task;
 extern pthread_mutex_t mutex1;
 extern pthread_cond_t  checkfinished;
+pthread_mutex_t mutex_output=PTHREAD_MUTEX_INITIALIZER;
 extern int submitted;
 extern int finished;
 
@@ -27,14 +29,28 @@ void * worker(void * arg){
 
 
 
-
-
-
-        
         task_return_value_t ret = exec_task(active_task);
         if (ret == TASK_COMPLETED){
-                terminate_task(active_task);
+                if(task->parent_task==NULL){
+                    terminate_task(active_task);
+                }else{
+                    pthread_mutex_lock(&mutex_output);
+                    attach_param_with_elem(task->parent_task->output_from_dependencies_list,retrieve_param(task->output_list));
+                    pthread_mutex_unlock(&mutex_output);
+                    
+                    terminate_task(active_task);
+                }
+                
+
+                
         }
+        #ifdef WITH_DEPENDENCIES
+                        else{
+
+
+                            active_task->status = WAITING;
+                        }
+                #endif
 
 
     }
@@ -91,7 +107,8 @@ unsigned int exec_task(task_t *t)
 }
 
 void terminate_task(task_t *t)
-{
+{   
+    pthread_mutex_lock(&mutex1);
     t->status = TERMINATED;
     
     PRINT_DEBUG(10, "Task terminated: %u\n", t->task_id);
@@ -105,7 +122,7 @@ void terminate_task(task_t *t)
     }
 #endif
 
-    pthread_mutex_lock(&mutex1);
+    
     finished++;
     if (finished == submitted) {
         pthread_cond_signal(&checkfinished);   // 或 pthread_cond_signal(&cond2);

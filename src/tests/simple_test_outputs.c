@@ -14,6 +14,7 @@ task_return_value_t simple_routine(task_t *t, unsigned int step)
 {
     int *o = (int*) retrieve_output(t);
     *o = VAL;
+     //printf("aaaaa ");
     
     return TASK_COMPLETED;
 }

@@ -8,7 +8,7 @@
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  emptyqueue = PTHREAD_COND_INITIALIZER;
 pthread_cond_t  fullqueue = PTHREAD_COND_INITIALIZER;
-
+int nb_waiting_th=0;
 
 
 tasks_queue_t* create_tasks_queue(void)
@@ -38,9 +38,16 @@ void free_tasks_queue(tasks_queue_t *q)
 void enqueue_task(tasks_queue_t *q, task_t *t)
 {
     pthread_mutex_lock(&mutex1);
+    nb_waiting_th++;
     while(q->index == q->task_buf_size){
-       pthread_cond_wait(&fullqueue, &mutex1);
+        if(nb_waiting_th==THREAD_COUNT){
+            q->task_buf_size = QUEUE_CAPACITY*2;
+            q->task_buffer = (task_t**) realloc(q->task_buffer,sizeof(task_t*) * q->task_buf_size);
+        }
+        
+        pthread_cond_wait(&fullqueue, &mutex1);
     }
+    nb_waiting_th--;
     q->task_buffer[q->index] = t;
     q->index++;
     pthread_cond_signal(&emptyqueue);

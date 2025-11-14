@@ -1,6 +1,6 @@
 CC =	gcc
 
-CFLAGS =  -g -Wall -Werror 
+CFLAGS =  -g -Wall -Werror -pthread
 
 ## picky compiler options
 #CFLAGS=-Wall -Wextra -Wpointer-arith -pedantic -g -std=gnu99

@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "cstdlib": "c"
+        "cstdlib": "c",
+        "assert.h": "c",
+        "stdlib.h": "c"
     }
 }

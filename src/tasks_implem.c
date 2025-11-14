@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include "tasks_io.h"
+#include "tasks.h"
 
 
 
@@ -16,7 +17,7 @@ tasks_queue_t *tqueue= NULL;
 extern __thread task_t *active_task;
 extern pthread_mutex_t mutex1;
 extern pthread_cond_t  checkfinished;
-pthread_mutex_t mutex_output=PTHREAD_MUTEX_INITIALIZER;
+extern pthread_cond_t  emptyqueue;
 extern int submitted;
 extern int finished;
 
@@ -34,9 +35,7 @@ void * worker(void * arg){
                 if(task->parent_task==NULL){
                     terminate_task(active_task);
                 }else{
-                    pthread_mutex_lock(&mutex_output);
-                    attach_param_with_elem(task->parent_task->output_from_dependencies_list,retrieve_param(task->output_list));
-                    pthread_mutex_unlock(&mutex_output);
+           
                     
                     terminate_task(active_task);
                 }
@@ -45,12 +44,12 @@ void * worker(void * arg){
                 
         }
         #ifdef WITH_DEPENDENCIES
-                        else{
-
-
-                            active_task->status = WAITING;
-                        }
-                #endif
+        else{
+                active_task->status = WAITING;
+                pthread_cond_broadcast(&emptyqueue);
+                
+            }
+        #endif
 
 
     }

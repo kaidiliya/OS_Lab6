@@ -40,17 +40,17 @@ void enqueue_task(tasks_queue_t *q, task_t *t)
     pthread_mutex_lock(&mutex1);
     nb_waiting_th++;
     while(q->index == q->task_buf_size){
-        if(nb_waiting_th==THREAD_COUNT){
-            q->task_buf_size = QUEUE_CAPACITY*2;
-            q->task_buffer = (task_t**) realloc(q->task_buffer,sizeof(task_t*) * q->task_buf_size);
-        }
+        // if(nb_waiting_th==THREAD_COUNT){
+        //     q->task_buf_size = QUEUE_CAPACITY*2;
+        //     q->task_buffer = (task_t**) realloc(q->task_buffer,sizeof(task_t*) * q->task_buf_size);
+        // }
         
         pthread_cond_wait(&fullqueue, &mutex1);
     }
     nb_waiting_th--;
     q->task_buffer[q->index] = t;
     q->index++;
-    pthread_cond_signal(&emptyqueue);
+    pthread_cond_broadcast(&emptyqueue);
     pthread_mutex_unlock(&mutex1);
 }
 

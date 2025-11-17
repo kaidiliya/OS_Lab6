@@ -15,7 +15,7 @@ pthread_cond_t checkfinished =PTHREAD_COND_INITIALIZER;
 int submitted = 0;
 int finished = 0;
 
-
+  
 void runtime_init(void)
 {
     /* a random number generator might be useful towards the end of
@@ -64,6 +64,7 @@ task_t* create_task(task_routine_t f)
 #ifdef WITH_DEPENDENCIES
     t->tstate.output_from_dependencies_list = NULL;
     t->task_dependency_count = 0;
+    t->task_dependency_done = 0;
     t->parent_task = NULL;
 #endif
     

@@ -7,7 +7,7 @@
 #include <pthread.h>
 #include "tasks_io.h"
 #include "tasks.h"
-
+  
 
 
 pthread_t tids[THREAD_COUNT];
@@ -15,7 +15,7 @@ pthread_t tids[THREAD_COUNT];
 tasks_queue_t *tqueue= NULL;
 
 extern __thread task_t *active_task;
-extern pthread_mutex_t mutex1;
+extern pthread_mutex_t mutex2;
 extern pthread_cond_t  checkfinished;
 extern pthread_cond_t  emptyqueue;
 extern int submitted;
@@ -25,33 +25,36 @@ void * worker(void * arg){
 
     for(;;){
         
-        task_t *task = get_task_to_execute();
-        active_task = task;
+        // task_t *task = get_task_to_execute();
+        // active_task = task;
 
+        // task_return_value_t ret = exec_task(active_task);
+        // if (ret == TASK_COMPLETED){
+        //         if(task->parent_task==NULL){
+        //             terminate_task(active_task);
+        //         }    
+        // }
+        // #ifdef WITH_DEPENDENCIES
+        // else{
+        //         active_task->status = WAITING;
+        //         pthread_cond_broadcast(&emptyqueue);
+        //     }
+        // #endif
 
+        active_task = get_task_to_execute();
 
         task_return_value_t ret = exec_task(active_task);
-        if (ret == TASK_COMPLETED){
-                if(task->parent_task==NULL){
-                    terminate_task(active_task);
-                }else{
-           
-                    
-                    terminate_task(active_task);
-                }
-                
 
-                
-        }
-        #ifdef WITH_DEPENDENCIES
-        else{
-                active_task->status = WAITING;
-                pthread_cond_broadcast(&emptyqueue);
-                
+            if (ret == TASK_COMPLETED){
+                terminate_task(active_task);
             }
-        #endif
 
-
+    #ifdef WITH_DEPENDENCIES
+            else{
+                active_task->status = WAITING;
+            }
+    #endif
+  
     }
     
 }
@@ -69,7 +72,6 @@ void delete_queues(void)
 void create_thread_pool(void)
 {
     for (int i=0;i<THREAD_COUNT;i++){
-
 
 
         if (pthread_create(&tids[i], NULL, worker, NULL)!=0) {
@@ -107,7 +109,7 @@ unsigned int exec_task(task_t *t)
 
 void terminate_task(task_t *t)
 {   
-    pthread_mutex_lock(&mutex1);
+    pthread_mutex_lock(&mutex2);
     t->status = TERMINATED;
     
     PRINT_DEBUG(10, "Task terminated: %u\n", t->task_id);
@@ -124,9 +126,9 @@ void terminate_task(task_t *t)
     
     finished++;
     if (finished == submitted) {
-        pthread_cond_signal(&checkfinished);   // 或 pthread_cond_signal(&cond2);
+        pthread_cond_signal(&checkfinished);
     }
-    pthread_mutex_unlock(&mutex1);
+    pthread_mutex_unlock(&mutex2);
 
 
 }

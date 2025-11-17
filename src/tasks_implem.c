@@ -16,6 +16,8 @@ tasks_queue_t *tqueue= NULL;
 
 extern __thread task_t *active_task;
 extern pthread_mutex_t mutex2;
+pthread_mutex_t mutex3 =PTHREAD_MUTEX_INITIALIZER;
+
 extern pthread_cond_t  checkfinished;
 extern pthread_cond_t  emptyqueue;
 extern int submitted;
@@ -40,7 +42,7 @@ void * worker(void * arg){
         //         pthread_cond_broadcast(&emptyqueue);
         //     }
         // #endif
-
+        pthread_mutex_lock(&mutex3);
         active_task = get_task_to_execute();
 
         task_return_value_t ret = exec_task(active_task);
@@ -54,7 +56,7 @@ void * worker(void * arg){
                 active_task->status = WAITING;
             }
     #endif
-  
+            pthread_mutex_unlock(&mutex3);
     }
     
 }

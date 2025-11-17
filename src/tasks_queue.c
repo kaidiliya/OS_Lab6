@@ -49,7 +49,7 @@ void enqueue_task(tasks_queue_t *q, task_t *t)
     // }
     //nb_waiting_th--;
 
-    if(q->index == q->task_buf_size){
+    if(q->index+1 == q->task_buf_size){
              q->task_buf_size = q->task_buf_size*2;
              q->task_buffer = (task_t**) realloc(q->task_buffer,sizeof(task_t*) * q->task_buf_size);
          }

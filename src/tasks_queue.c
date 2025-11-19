@@ -11,20 +11,24 @@ pthread_cond_t  emptyqueue = PTHREAD_COND_INITIALIZER;
 int nb_waiting_th=0;
 
 
-tasks_queue_t* create_tasks_queue(void)
+tasks_queue_t**create_tasks_queue(void)
 {
-    tasks_queue_t *q = (tasks_queue_t*) malloc(sizeof(tasks_queue_t));
+    
 
-    q->task_buf_size = QUEUE_CAPACITY;
-    q->task_buffer = (task_t**) malloc(sizeof(task_t*) * q->task_buf_size);
+    
+    tasks_queue_t **q= (tasks_queue_t**) malloc(sizeof(tasks_queue_t)*THREAD_COUNT);
+    for(int i=0;i<THREAD_COUNT;i++){
+    q[i]->task_buf_size = QUEUE_CAPACITY;
+    q[i]->task_buffer = (task_t**) malloc(sizeof(task_t*) * q[i]->task_buf_size);
 
-    q->index = 0;
+    q[i]->index = 0;}
 
     return q;
 }
 
 
-void free_tasks_queue(tasks_queue_t *q)
+
+void free_tasks_queue(tasks_queue_t **q)
 {
     /* IMPORTANT: We chose not to free the queues to simplify the
      * termination of the program (and make debugging less complex) */

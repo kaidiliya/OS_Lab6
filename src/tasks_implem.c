@@ -12,7 +12,7 @@
 
 pthread_t tids[THREAD_COUNT];
 
-tasks_queue_t *tqueue= NULL;
+tasks_queue_t **tqueue;
 
 extern __thread task_t *active_task;
 extern pthread_mutex_t mutex2;
@@ -23,7 +23,7 @@ extern int submitted;
 extern int finished;
 
 void * worker(void * arg){
-
+    int i=*(int*)arg;
     for(;;){
         
         // task_t *task = get_task_to_execute();
@@ -42,7 +42,7 @@ void * worker(void * arg){
         //     }
         // #endif
         
-        active_task = get_task_to_execute();
+        active_task = get_task_to_execute(i);
        
         task_return_value_t ret = exec_task(active_task);
         
@@ -75,7 +75,7 @@ void create_thread_pool(void)
     for (int i=0;i<THREAD_COUNT;i++){
 
 
-        if (pthread_create(&tids[i], NULL, worker, NULL)!=0) {
+        if (pthread_create(&tids[i], NULL, worker, &i)!=0) {
             perror("pthread_create"); 
             exit(EXIT_FAILURE);
         }
@@ -87,13 +87,13 @@ void create_thread_pool(void)
 
 
 void dispatch_task(task_t *t)
-{
-    enqueue_task(tqueue, t);
+{   //implement robin in here
+    enqueue_task(tqueue[1], t);
 }
 
-task_t* get_task_to_execute(void)
+task_t* get_task_to_execute(int i)
 {
-    return dequeue_task(tqueue);
+    return dequeue_task(tqueue[i]);
 }
 
 unsigned int exec_task(task_t *t)

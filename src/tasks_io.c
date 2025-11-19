@@ -1,14 +1,11 @@
 #include <stdlib.h>
 #include <assert.h>
-#include <pthread.h>
 
 #include "tasks.h"
 
 /* !!! None of these functions need to be modified until stage B2 */
 
 /* Appends 'e' to the list of params */
-pthread_mutex_t mutex_output=PTHREAD_MUTEX_INITIALIZER;
-
 static void param_list_append(task_param_t **list, task_param_t *e)
 {   
     if (*list == NULL){
@@ -39,7 +36,7 @@ static task_param_t* param_list_remove_first(task_param_t **list)
 
 /* Allocates a region of size 's' and appends it as param to the list
  * of params */
-task_param_t* attach_param(task_param_t **list, size_t s)
+static task_param_t* attach_param(task_param_t **list, size_t s)
 {
     task_param_t* param = malloc(sizeof(task_param_t));
 
@@ -54,7 +51,7 @@ task_param_t* attach_param(task_param_t **list, size_t s)
 #ifdef WITH_DEPENDENCIES
 /* Creates a new parameter (without allocating a memory region) and
  * appends it to the list of params */
-task_param_t* attach_param_with_elem(task_param_t **list, void* elem)
+static task_param_t* attach_param_with_elem(task_param_t **list, void* elem)
 {
     task_param_t* param = malloc(sizeof(task_param_t));
 
@@ -68,7 +65,7 @@ task_param_t* attach_param_with_elem(task_param_t **list, void* elem)
 #endif
 
 /* Retrieves one parameter from a list */
-task_param_t* retrieve_param(task_param_t **list)
+static task_param_t* retrieve_param(task_param_t **list)
 {
     return param_list_remove_first(list);
 }
@@ -89,12 +86,7 @@ void* attach_output(task_t *t, size_t s)
 #ifdef WITH_DEPENDENCIES
     if(active_task != NULL){
         /* the active task is interested in the outputs */
-        t->parent_task=active_task;
-        pthread_mutex_lock(&mutex_output);
-                
-  
         attach_param_with_elem(&active_task->tstate.output_from_dependencies_list, param->elem);
-        pthread_mutex_unlock(&mutex_output);
         return param->elem;
     }
     else{

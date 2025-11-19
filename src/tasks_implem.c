@@ -12,7 +12,7 @@
 
 pthread_t tids[THREAD_COUNT];
 
-tasks_queue_t **tqueue;
+tasks_queue_t *tqueue;
 
 extern __thread task_t *active_task;
 extern pthread_mutex_t mutex2;
@@ -57,6 +57,7 @@ void * worker(void * arg){
     #endif
             
     }
+    free(arg);
     
 }
 
@@ -73,13 +74,16 @@ void delete_queues(void)
 void create_thread_pool(void)
 {
     for (int i=0;i<THREAD_COUNT;i++){
+        int *arg=malloc(sizeof(int));
+        *arg=i;
 
-
-        if (pthread_create(&tids[i], NULL, worker, &i)!=0) {
+        if (pthread_create(&tids[i], NULL, worker, arg)!=0) {
             perror("pthread_create"); 
             exit(EXIT_FAILURE);
         }
+
     }
+
     return ;
 }
 
@@ -88,12 +92,12 @@ void create_thread_pool(void)
 
 void dispatch_task(task_t *t)
 {   //implement robin in here
-    enqueue_task(tqueue[1], t);
+    enqueue_task(&tqueue[0], t);
 }
 
 task_t* get_task_to_execute(int i)
 {
-    return dequeue_task(tqueue[i]);
+    return dequeue_task(&tqueue[i]);
 }
 
 unsigned int exec_task(task_t *t)
@@ -126,9 +130,9 @@ void terminate_task(task_t *t)
 
     
     finished++;
-    if (finished == submitted) {
+    
         pthread_cond_signal(&checkfinished);
-    }
+    
     pthread_mutex_unlock(&mutex2);
 
 

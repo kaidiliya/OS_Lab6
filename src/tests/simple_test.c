@@ -77,9 +77,9 @@ int main(void)
     task_waitall();
 
     stage++;
+    printf("ahhhhhhhhhhhhhhhhhhhhhhhhh");
 
     t = create_task(print_message);
-
     in = attach_input(t, sizeof(char) * STR_SIZE);
     memset(in, 0, STR_SIZE);
     strncpy(in, "hello one last time", STR_SIZE);

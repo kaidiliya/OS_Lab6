@@ -5,13 +5,17 @@
 
 #include "tasks_queue.h"
 
-pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutexs_q[THREAD_COUNT];
+
+
 pthread_cond_t  emptyqueue = PTHREAD_COND_INITIALIZER;
 
 
 tasks_queue_t*create_tasks_queue(void)
 {
-    
+    for (int i = 0; i < THREAD_COUNT; i++) {
+    pthread_mutex_init(&mutexs_q[i], NULL);
+    }
 
     
     tasks_queue_t *q= (tasks_queue_t*) malloc(sizeof(tasks_queue_t)*THREAD_COUNT);
@@ -38,9 +42,9 @@ void free_tasks_queue(tasks_queue_t *q)
 
   
 
-void enqueue_task(tasks_queue_t *q, task_t *t)
+void enqueue_task(tasks_queue_t *q, task_t *t,int th_nb)
 {
-    pthread_mutex_lock(&mutex1);
+    pthread_mutex_lock(&mutexs_q[th_nb]);
 
     if(q->index +1 == q->task_buf_size){
              q->task_buf_size = q->task_buf_size*2;
@@ -49,17 +53,17 @@ void enqueue_task(tasks_queue_t *q, task_t *t)
     q->task_buffer[q->index] = t;
     q->index++;
     pthread_cond_broadcast(&emptyqueue);
-    pthread_mutex_unlock(&mutex1);
+    pthread_mutex_unlock(&mutexs_q[th_nb]);
 }
 
 
-task_t* dequeue_task(tasks_queue_t *q)
+task_t* dequeue_task(tasks_queue_t *q,int th_nb)
 {
-    pthread_mutex_lock(&mutex1);
+    pthread_mutex_lock(&mutexs_q[th_nb]);
     while (q->index == 0) {
-        pthread_cond_wait(&emptyqueue, &mutex1);
+        pthread_cond_wait(&emptyqueue, &mutexs_q[th_nb]);
     }
     task_t *t = q->task_buffer[--q->index]; // LIFO
-    pthread_mutex_unlock(&mutex1);
+    pthread_mutex_unlock(&mutexs_q[th_nb]);
     return t;
 }

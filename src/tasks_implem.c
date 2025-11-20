@@ -12,14 +12,10 @@
 
 pthread_t tids[THREAD_COUNT];
 
-<<<<<<< HEAD
-tasks_queue_t *tqueue;
-=======
 tasks_queue_t *queues[THREAD_COUNT];
 
 int round_robin=0;
 pthread_mutex_t mutex_rr;
->>>>>>> 63ebe0a (finish create queue and round-robin)
 
 extern __thread task_t *active_task;
 extern pthread_mutex_t mutex2;
@@ -30,35 +26,11 @@ extern int submitted;
 extern int finished;
 
 void * worker(void * arg){
-<<<<<<< HEAD
-    int i=*(int*)arg;
-    for(;;){
-        
-        // task_t *task = get_task_to_execute();
-        // active_task = task;
-
-        // task_return_value_t ret = exec_task(active_task);
-        // if (ret == TASK_COMPLETED){
-        //         if(task->parent_task==NULL){
-        //             terminate_task(active_task);
-        //         }    
-        // }
-        // #ifdef WITH_DEPENDENCIES
-        // else{
-        //         active_task->status = WAITING;
-        //         pthread_cond_broadcast(&emptyqueue);
-        //     }
-        // #endif
-        
-        active_task = get_task_to_execute(i);
-       
-=======
     int worker_id=  *(int*)arg;
 
     for(;;){
         
         active_task = get_task_to_execute(worker_id);
->>>>>>> 63ebe0a (finish create queue and round-robin)
         task_return_value_t ret = exec_task(active_task);
         
             if (ret == TASK_COMPLETED){
@@ -68,6 +40,8 @@ void * worker(void * arg){
     #ifdef WITH_DEPENDENCIES
             else{
                 active_task->status = WAITING;
+                task_check_runnable(active_task);
+
             }
     #endif
             
@@ -111,31 +85,21 @@ void create_thread_pool(void)
 
 
 void dispatch_task(task_t *t)
-<<<<<<< HEAD
-{   //implement robin in here
-    enqueue_task(&tqueue[0], t);
-}
-
-task_t* get_task_to_execute(int i)
-{
-    return dequeue_task(&tqueue[i]);
-=======
 {
     pthread_mutex_lock(&mutex_rr);
     int index = round_robin % THREAD_COUNT;
     round_robin++;
-
-    enqueue_task(queues[index], t);
-
     pthread_mutex_unlock(&mutex_rr);
+
+    enqueue_task(queues[index], t,index);
+
 
 }
 
 
 
 task_t* get_task_to_execute(int worker_id) {
-    return dequeue_task(queues[worker_id]);
->>>>>>> 63ebe0a (finish create queue and round-robin)
+    return dequeue_task(queues[worker_id],worker_id);
 }
 
 unsigned int exec_task(task_t *t)

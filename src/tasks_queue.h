@@ -14,7 +14,7 @@ typedef struct tasks_queue{
 tasks_queue_t*create_tasks_queue(void);
 void free_tasks_queue(tasks_queue_t *q);
 
-void enqueue_task(tasks_queue_t *q, task_t *t);
-task_t* dequeue_task(tasks_queue_t *q);
+void enqueue_task(tasks_queue_t *q, task_t *t,int index);
+task_t* dequeue_task(tasks_queue_t *q,int index);
 
 #endif

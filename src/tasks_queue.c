@@ -1,15 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-
+#include "tasks_implem.h"
 
 #include "tasks_queue.h"
 
 pthread_mutex_t mutexs_q[THREAD_COUNT];
-
+extern tasks_queue_t *queues[THREAD_COUNT];
 
 pthread_cond_t  emptyqueue = PTHREAD_COND_INITIALIZER;
-
+int steal_p=0;
 
 tasks_queue_t*create_tasks_queue(void)
 {
@@ -61,9 +61,28 @@ task_t* dequeue_task(tasks_queue_t *q,int th_nb)
 {
     pthread_mutex_lock(&mutexs_q[th_nb]);
     while (q->index == 0) {
-        pthread_cond_wait(&emptyqueue, &mutexs_q[th_nb]);
+        int r=rand()%THREAD_COUNT;
+        while(r==th_nb){
+            r=rand()%THREAD_COUNT;
+        }
+        if(!(steal_p=queues[r]->index)){
+            steal(queues[r],th_nb);
+        }else{
+            pthread_mutex_unlock(&mutexs_q[th_nb]);
+        }
+        
     }
+    
     task_t *t = q->task_buffer[--q->index]; // LIFO
     pthread_mutex_unlock(&mutexs_q[th_nb]);
     return t;
+}
+
+
+void steal(tasks_queue_t *q,int th_nb){
+    task_t *t=q->task_buffer[steal_p];
+    enqueue_task(queues[th_nb],t,th_nb);
+    steal_p++;
+
+
 }

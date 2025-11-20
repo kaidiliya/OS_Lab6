@@ -15,22 +15,22 @@ pthread_t tids[THREAD_COUNT];
 tasks_queue_t *queues[THREAD_COUNT];
 
 int round_robin=0;
-pthread_mutex_t mutex_rr;
-
+pthread_mutex_t mutex_rr=PTHREAD_MUTEX_INITIALIZER;
+__thread int task_id;
 extern __thread task_t *active_task;
 extern pthread_mutex_t mutex2;
-pthread_mutex_t mutex_task;
+pthread_mutex_t mutex_task=PTHREAD_MUTEX_INITIALIZER;
 extern pthread_cond_t  checkfinished;
 extern pthread_cond_t  emptyqueue;
 extern int submitted;
 extern int finished;
 
 void * worker(void * arg){
-    int worker_id=  *(int*)arg;
-
+    task_id=  *(int*)arg;
+    
     for(;;){
         
-        active_task = get_task_to_execute(worker_id);
+        active_task = get_task_to_execute(task_id);
         task_return_value_t ret = exec_task(active_task);
         
             if (ret == TASK_COMPLETED){
@@ -96,6 +96,13 @@ void dispatch_task(task_t *t)
 
 }
 
+void dispatch_task_worker(task_t *t)
+{
+    enqueue_task(queues[task_id], t,task_id);
+
+
+}
+
 
 
 task_t* get_task_to_execute(int worker_id) {
@@ -133,7 +140,7 @@ void terminate_task(task_t *t)
     
     finished++;
     
-        pthread_cond_signal(&checkfinished);
+    pthread_cond_signal(&checkfinished);
     
     pthread_mutex_unlock(&mutex2);
 
@@ -146,7 +153,7 @@ void task_check_runnable(task_t *t)
 #ifdef WITH_DEPENDENCIES
     if(t->task_dependency_done == t->task_dependency_count &&(t->status==WAITING)){
         t->status = READY;
-        dispatch_task(t);
+        dispatch_task_worker(t);
     }
 #endif
 pthread_mutex_unlock(&mutex_task);

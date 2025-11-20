@@ -13,12 +13,14 @@
 pthread_t tids[THREAD_COUNT];
 
 tasks_queue_t *queues[THREAD_COUNT];
+extern pthread_mutex_t mutexs_q[THREAD_COUNT];
 
 int round_robin=0;
 pthread_mutex_t mutex_rr=PTHREAD_MUTEX_INITIALIZER;
-__thread int task_id;
+__thread int thread_id;
 extern __thread task_t *active_task;
 extern pthread_mutex_t mutex2;
+pthread_mutex_t mutex_rand=PTHREAD_MUTEX_INITIALIZER;;
 pthread_mutex_t mutex_task=PTHREAD_MUTEX_INITIALIZER;
 extern pthread_cond_t  checkfinished;
 extern pthread_cond_t  emptyqueue;
@@ -26,24 +28,26 @@ extern int submitted;
 extern int finished;
 
 void * worker(void * arg){
-    task_id=  *(int*)arg;
+    thread_id=  *(int*)arg;
     
     for(;;){
         
-        active_task = get_task_to_execute(task_id);
-        task_return_value_t ret = exec_task(active_task);
-        
-            if (ret == TASK_COMPLETED){
-                terminate_task(active_task);
-            }
+        active_task = get_task_to_execute(thread_id);
+        if(active_task!=NULL){
+            task_return_value_t ret = exec_task(active_task);
+            
+                if (ret == TASK_COMPLETED){
+                    terminate_task(active_task);
+                }
 
-    #ifdef WITH_DEPENDENCIES
-            else{
-                active_task->status = WAITING;
-                task_check_runnable(active_task);
+        #ifdef WITH_DEPENDENCIES
+                else{
+                    active_task->status = WAITING;
+                    task_check_runnable(active_task);
 
-            }
+                }
     #endif
+            }
             
     }
     free(arg);
@@ -98,7 +102,7 @@ void dispatch_task(task_t *t)
 
 void dispatch_task_worker(task_t *t)
 {
-    enqueue_task(queues[task_id], t,task_id);
+    enqueue_task(queues[thread_id], t,thread_id);
 
 
 }
@@ -106,7 +110,36 @@ void dispatch_task_worker(task_t *t)
 
 
 task_t* get_task_to_execute(int worker_id) {
-    return dequeue_task(queues[worker_id],worker_id);
+
+    pthread_mutex_lock(&mutexs_q[worker_id]);
+
+    task_t* t=dequeue_task(queues[worker_id],worker_id);
+    pthread_mutex_unlock(&mutexs_q[worker_id]);
+    pthread_mutex_lock(&mutex_rand);
+
+    if(t==NULL){
+        int r=rand()%THREAD_COUNT;  
+        while(r==worker_id){
+            r=rand()%THREAD_COUNT;
+        }
+         pthread_mutex_lock(&mutexs_q[r]);
+        if(!(queues[r]->index==queues[r]->steal_p)){
+            
+           
+ 
+            steal(queues[r],worker_id);
+            
+            
+            
+
+        }
+        pthread_mutex_unlock(&mutexs_q[r]);
+        
+    }
+    pthread_mutex_unlock(&mutex_rand);
+
+    return t;
+
 }
 
 unsigned int exec_task(task_t *t)

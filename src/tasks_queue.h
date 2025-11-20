@@ -8,6 +8,7 @@ typedef struct tasks_queue{
     task_t** task_buffer;
     unsigned int task_buf_size;
     unsigned int index;
+    unsigned int steal_p;
     
 } tasks_queue_t;
     

@@ -128,7 +128,8 @@ task_t* get_task_to_execute(int worker_id) {
            
  
             steal(queues[r],worker_id);
-            
+            PRINT_DEBUG(10, "               Steal from %i in  queue %i\n", worker_id,r);
+
             
             
 

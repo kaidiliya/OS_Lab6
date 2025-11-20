@@ -6,7 +6,7 @@
 #include "../parallel_for.h"
 #include "../debug.h"
 
-#define NB_TASKS 200
+#define NB_TASKS 1000000
 #define NB_INTERVALS 100000000
 
 /* Code computing pi using a Riemann Sum to compute the integral

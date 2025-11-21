@@ -14,8 +14,10 @@ pthread_t tids[THREAD_COUNT];
 
 tasks_queue_t *tqueue= NULL;
 
+// pthread_mutex_t mutex_runable = PTHREAD_MUTEX_INITIALIZER;
+
 extern __thread task_t *active_task;
-extern pthread_mutex_t mutex2;
+extern pthread_mutex_t mutex_task_op_count;
 
 extern pthread_cond_t  checkfinished;
 extern pthread_cond_t  emptyqueue;
@@ -25,22 +27,6 @@ extern int finished;
 void * worker(void * arg){
 
     for(;;){
-        
-        // task_t *task = get_task_to_execute();
-        // active_task = task;
-
-        // task_return_value_t ret = exec_task(active_task);
-        // if (ret == TASK_COMPLETED){
-        //         if(task->parent_task==NULL){
-        //             terminate_task(active_task);
-        //         }    
-        // }
-        // #ifdef WITH_DEPENDENCIES
-        // else{
-        //         active_task->status = WAITING;
-        //         pthread_cond_broadcast(&emptyqueue);
-        //     }
-        // #endif
         
         active_task = get_task_to_execute();
        
@@ -53,6 +39,7 @@ void * worker(void * arg){
     #ifdef WITH_DEPENDENCIES
             else{
                 active_task->status = WAITING;
+                task_check_runnable(active_task);
             }
     #endif
             
@@ -110,7 +97,7 @@ unsigned int exec_task(task_t *t)
 
 void terminate_task(task_t *t)
 {   
-    pthread_mutex_lock(&mutex2);
+    pthread_mutex_lock(&mutex_task_op_count);
     t->status = TERMINATED;
     
     PRINT_DEBUG(10, "Task terminated: %u\n", t->task_id);
@@ -129,17 +116,17 @@ void terminate_task(task_t *t)
     if (finished == submitted) {
         pthread_cond_signal(&checkfinished);
     }
-    pthread_mutex_unlock(&mutex2);
-
-
+    pthread_mutex_unlock(&mutex_task_op_count);
 }
 
 void task_check_runnable(task_t *t)
 {
+// pthread_mutex_lock(&mutex_runable);
 #ifdef WITH_DEPENDENCIES
     if(t->task_dependency_done == t->task_dependency_count &&(t->status==WAITING)){
         t->status = READY;
         dispatch_task(t);
     }
 #endif
+// pthread_mutex_lock(&mutex_runable);
 }

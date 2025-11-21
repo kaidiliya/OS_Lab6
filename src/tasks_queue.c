@@ -5,9 +5,8 @@
 
 #include "tasks_queue.h"
 
-pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_queue = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  emptyqueue = PTHREAD_COND_INITIALIZER;
-//pthread_cond_t  fullqueue = PTHREAD_COND_INITIALIZER;
 int nb_waiting_th=0;
 
 
@@ -37,17 +36,7 @@ void free_tasks_queue(tasks_queue_t *q)
 
 void enqueue_task(tasks_queue_t *q, task_t *t)
 {
-    pthread_mutex_lock(&mutex1);
-    //nb_waiting_th++;
-    // while(q->index == q->task_buf_size){
-    //      if(nb_waiting_th==THREAD_COUNT){
-    //          q->task_buf_size = q->task_buf_size*2;
-    //          q->task_buffer = (task_t**) realloc(q->task_buffer,sizeof(task_t*) * q->task_buf_size);
-    //      }
-        
-    //     //pthread_cond_wait(&fullqueue, &mutex1);
-    // }
-    //nb_waiting_th--;
+    pthread_mutex_lock(&mutex_queue);
 
     if(q->index+1 == q->task_buf_size){
              q->task_buf_size = q->task_buf_size*2;
@@ -56,18 +45,17 @@ void enqueue_task(tasks_queue_t *q, task_t *t)
     q->task_buffer[q->index] = t;
     q->index++;
     pthread_cond_signal(&emptyqueue);
-    pthread_mutex_unlock(&mutex1);
+    pthread_mutex_unlock(&mutex_queue);
 }
 
 
 task_t* dequeue_task(tasks_queue_t *q)
 {
-    pthread_mutex_lock(&mutex1);
+    pthread_mutex_lock(&mutex_queue);
     while (q->index == 0) {
-        pthread_cond_wait(&emptyqueue, &mutex1);
+        pthread_cond_wait(&emptyqueue, &mutex_queue);
     }
-    task_t *t = q->task_buffer[--q->index]; // LIFO
-    //pthread_cond_signal(&fullqueue);
-    pthread_mutex_unlock(&mutex1);
+    task_t *t = q->task_buffer[--q->index]; 
+    pthread_mutex_unlock(&mutex_queue);
     return t;
 }

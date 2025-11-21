@@ -9,7 +9,7 @@
 system_state_t sys_state;
 
 __thread task_t *active_task;
-pthread_mutex_t mutex2 =PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_task_op_count =PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t checkfinished =PTHREAD_COND_INITIALIZER;
 
 int submitted = 0;
@@ -77,7 +77,7 @@ task_t* create_task(task_routine_t f)
 
 void submit_task(task_t *t)
 {
-    pthread_mutex_lock(&mutex2);
+    pthread_mutex_lock(&mutex_task_op_count);
     t->status = READY;
 
 #ifdef WITH_DEPENDENCIES    
@@ -88,23 +88,20 @@ void submit_task(task_t *t)
         PRINT_DEBUG(100, "Dependency %u -> %u\n", active_task->task_id, t->task_id);
     }
 #endif
-
     
     submitted++;
-    pthread_mutex_unlock(&mutex2);
+    pthread_mutex_unlock(&mutex_task_op_count);
 
     dispatch_task(t);
 
 }
 
 
-
-
 void task_waitall(void)
 {
-    pthread_mutex_lock(&mutex2);
+    pthread_mutex_lock(&mutex_task_op_count);
     while (finished < submitted) {
-        pthread_cond_wait(&checkfinished, &mutex2);
+        pthread_cond_wait(&checkfinished, &mutex_task_op_count);
     }
-    pthread_mutex_unlock(&mutex2);
+    pthread_mutex_unlock(&mutex_task_op_count);
 }

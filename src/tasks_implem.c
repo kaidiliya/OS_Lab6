@@ -8,6 +8,8 @@
 #include "tasks_io.h"
 #include "tasks.h"
   
+pthread_mutex_t mutex_runable = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_rr = PTHREAD_MUTEX_INITIALIZER;
 
 
 pthread_t tids[THREAD_COUNT];
@@ -15,11 +17,9 @@ pthread_t tids[THREAD_COUNT];
 tasks_queue_t *queues[THREAD_COUNT];
 
 int round_robin=0;
-pthread_mutex_t mutex_rr;
 
 extern __thread task_t *active_task;
-extern pthread_mutex_t mutex2;
-pthread_mutex_t mutex_task;
+extern pthread_mutex_t mutex_task_op_count;
 extern pthread_cond_t  checkfinished;
 extern pthread_cond_t  emptyqueue;
 extern int submitted;
@@ -116,7 +116,7 @@ unsigned int exec_task(task_t *t)
 
 void terminate_task(task_t *t)
 {   
-    pthread_mutex_lock(&mutex2);
+    pthread_mutex_lock(&mutex_task_op_count);
     t->status = TERMINATED;
     
     PRINT_DEBUG(10, "Task terminated: %u\n", t->task_id);
@@ -133,21 +133,21 @@ void terminate_task(task_t *t)
     
     finished++;
     
-        pthread_cond_signal(&checkfinished);
+    pthread_cond_signal(&checkfinished);
     
-    pthread_mutex_unlock(&mutex2);
+    pthread_mutex_unlock(&mutex_task_op_count);
 
 
 }
 
 void task_check_runnable(task_t *t)
 {
-    pthread_mutex_lock(&mutex_task);
+pthread_mutex_lock(&mutex_runable);
 #ifdef WITH_DEPENDENCIES
     if(t->task_dependency_done == t->task_dependency_count &&(t->status==WAITING)){
         t->status = READY;
         dispatch_task(t);
     }
 #endif
-pthread_mutex_unlock(&mutex_task);
+pthread_mutex_unlock(&mutex_runable);
 }

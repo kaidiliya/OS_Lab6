@@ -7,7 +7,6 @@
 
 pthread_mutex_t mutexs_q[THREAD_COUNT];
 
-
 pthread_cond_t  emptyqueue = PTHREAD_COND_INITIALIZER;
 
 
@@ -63,7 +62,7 @@ task_t* dequeue_task(tasks_queue_t *q,int th_nb)
     while (q->index == 0) {
         pthread_cond_wait(&emptyqueue, &mutexs_q[th_nb]);
     }
-    task_t *t = q->task_buffer[--q->index]; // LIFO
+    task_t *t = q->task_buffer[--q->index];
     pthread_mutex_unlock(&mutexs_q[th_nb]);
     return t;
 }

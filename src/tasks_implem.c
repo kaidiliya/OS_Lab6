@@ -120,12 +120,12 @@ void terminate_task(task_t *t)
 
 void task_check_runnable(task_t *t)
 {
-//pthread_mutex_lock(&mutex_runable);
+pthread_mutex_lock(&mutex_runable);
 #ifdef WITH_DEPENDENCIES
     if(t->task_dependency_done == t->task_dependency_count &&(t->status==WAITING)){
         t->status = READY;
         dispatch_task(t);
     }
 #endif
-//pthread_mutex_lock(&mutex_runable);
+pthread_mutex_unlock(&mutex_runable);
 }

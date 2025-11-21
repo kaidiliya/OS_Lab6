@@ -44,7 +44,7 @@ void enqueue_task(tasks_queue_t *q, task_t *t)
          }
     q->task_buffer[q->index] = t;
     q->index++;
-    pthread_cond_signal(&emptyqueue);
+    pthread_cond_broadcast(&emptyqueue);
     pthread_mutex_unlock(&mutex_queue);
 }
 

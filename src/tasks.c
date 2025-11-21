@@ -9,9 +9,13 @@
 system_state_t sys_state;
 
 __thread task_t *active_task;
-pthread_mutex_t mutex_task_op_count =PTHREAD_MUTEX_INITIALIZER;
+
+//Protects submitted/finished counters
+pthread_mutex_t mutex_task_op_count =PTHREAD_MUTEX_INITIALIZER; 
+//For task_waitall to wait until all tasks are done
 pthread_cond_t checkfinished =PTHREAD_COND_INITIALIZER;
 
+//Total number of tasks submitted and finished
 int submitted = 0;
 int finished = 0;
 
@@ -103,6 +107,7 @@ void task_waitall(void)
 {
     pthread_mutex_lock(&mutex_task_op_count);
     while (finished < submitted) {
+        //The condition is signaled when a task finishes
         pthread_cond_wait(&checkfinished, &mutex_task_op_count);
     }
     pthread_mutex_unlock(&mutex_task_op_count);

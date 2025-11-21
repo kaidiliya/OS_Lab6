@@ -7,9 +7,10 @@
 #include <pthread.h>
 
 
-
+//WOrker thread ID
 pthread_t tids[THREAD_COUNT];
 
+//Global queue used by all workers
 tasks_queue_t *tqueue= NULL;
 
 extern __thread task_t *active_task;

@@ -9,7 +9,7 @@
 system_state_t sys_state;
 
 __thread task_t *active_task;
-pthread_mutex_t mutex2 =PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_task_op_count =PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t checkfinished =PTHREAD_COND_INITIALIZER;
 
 int submitted = 0;
@@ -88,9 +88,9 @@ void submit_task(task_t *t)
     }
 #endif
 
-    pthread_mutex_lock(&mutex2);
+    pthread_mutex_lock(&mutex_task_op_count);
     submitted++;
-    pthread_mutex_unlock(&mutex2);
+    pthread_mutex_unlock(&mutex_task_op_count);
 
     dispatch_task(t);
 
@@ -101,9 +101,9 @@ void submit_task(task_t *t)
 
 void task_waitall(void)
 {
-    pthread_mutex_lock(&mutex2);
+    pthread_mutex_lock(&mutex_task_op_count);
     while (finished < submitted) {
-        pthread_cond_wait(&checkfinished, &mutex2);
+        pthread_cond_wait(&checkfinished, &mutex_task_op_count);
     }
-    pthread_mutex_unlock(&mutex2);
+    pthread_mutex_unlock(&mutex_task_op_count);
 }

@@ -13,7 +13,7 @@ pthread_t tids[THREAD_COUNT];
 tasks_queue_t *tqueue= NULL;
 
 extern __thread task_t *active_task;
-extern pthread_mutex_t mutex1;
+extern pthread_mutex_t mutex_q;
 extern pthread_cond_t  checkfinished;
 extern int submitted;
 extern int finished;
@@ -23,14 +23,7 @@ void * worker(void * arg){
     for(;;){
         
         task_t *task = get_task_to_execute();
-        active_task = task;
-
-
-
-
-
-
-        
+        active_task = task;       
         task_return_value_t ret = exec_task(active_task);
         if (ret == TASK_COMPLETED){
                 terminate_task(active_task);
@@ -54,9 +47,6 @@ void delete_queues(void)
 void create_thread_pool(void)
 {
     for (int i=0;i<THREAD_COUNT;i++){
-
-
-
         if (pthread_create(&tids[i], NULL, worker, NULL)!=0) {
             perror("pthread_create"); 
             exit(EXIT_FAILURE);
@@ -105,12 +95,11 @@ void terminate_task(task_t *t)
     }
 #endif
 
-    pthread_mutex_lock(&mutex1);
+    pthread_mutex_lock(&mutex_q); //mutex of the queue
     finished++;
-    if (finished == submitted) {
-        pthread_cond_signal(&checkfinished);   // 或 pthread_cond_signal(&cond2);
-    }
-    pthread_mutex_unlock(&mutex1);
+    pthread_cond_signal(&checkfinished);   // condition signal send to main thread to check if all task are finished
+    
+    pthread_mutex_unlock(&mutex_q);
 
 
 }

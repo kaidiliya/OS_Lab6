@@ -12,6 +12,7 @@ __thread task_t *active_task;
 pthread_mutex_t mutex_task_op_count =PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t checkfinished =PTHREAD_COND_INITIALIZER;
 
+//Total number of tasks submitted and finished
 int submitted = 0;
 int finished = 0;
 

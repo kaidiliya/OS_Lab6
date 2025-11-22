@@ -7,9 +7,10 @@
 #include <pthread.h>
 
 
-
+//WOrker thread ID
 pthread_t tids[THREAD_COUNT];
 
+//Global queue used by all workers
 tasks_queue_t *tqueue= NULL;
 
 extern __thread task_t *active_task;
@@ -28,7 +29,6 @@ void * worker(void * arg){
         if (ret == TASK_COMPLETED){
                 terminate_task(active_task);
         }
-
 
     }
     

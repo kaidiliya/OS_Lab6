@@ -7,6 +7,7 @@
 
 pthread_mutex_t mutex_q = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  emptyqueue = PTHREAD_COND_INITIALIZER;
+//Signaled when there is space in the queue
 pthread_cond_t  fullqueue = PTHREAD_COND_INITIALIZER;
 
 
@@ -43,6 +44,7 @@ void enqueue_task(tasks_queue_t *q, task_t *t)
     }
     q->task_buffer[q->index] = t;
     q->index++;
+
     pthread_cond_signal(&emptyqueue);
     pthread_mutex_unlock(&mutex_q);
 }
@@ -54,7 +56,8 @@ task_t* dequeue_task(tasks_queue_t *q)
     while (q->index == 0) {
         pthread_cond_wait(&emptyqueue, &mutex_q);
     }
-    task_t *t = q->task_buffer[--q->index]; // LIFO
+    task_t *t = q->task_buffer[q->index-1];
+    q->index--;
     pthread_cond_signal(&fullqueue);
     pthread_mutex_unlock(&mutex_q);
     return t;

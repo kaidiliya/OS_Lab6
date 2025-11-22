@@ -77,7 +77,7 @@ task_t* create_task(task_routine_t f)
 
 void submit_task(task_t *t)
 {
-    pthread_mutex_lock(&mutex2);
+    pthread_mutex_lock(&mutex2); //mutex global
     t->status = READY;
 
 #ifdef WITH_DEPENDENCIES    
@@ -102,7 +102,7 @@ void submit_task(task_t *t)
 
 void task_waitall(void)
 {
-    pthread_mutex_lock(&mutex2);
+    pthread_mutex_lock(&mutex2); //mutex global
     while (finished < submitted) {
         pthread_cond_wait(&checkfinished, &mutex2);
     }

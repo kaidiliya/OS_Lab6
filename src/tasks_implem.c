@@ -111,18 +111,18 @@ void dispatch_task_worker(task_t *t)
 
 task_t* get_task_to_execute(int worker_id) {
 
-    pthread_mutex_lock(&mutexs_q[worker_id]);
+    pthread_mutex_lock(&mutexs_q[worker_id]); //mutex of the queue of worker_id
 
     task_t* t=dequeue_task(queues[worker_id],worker_id);
     pthread_mutex_unlock(&mutexs_q[worker_id]);
-    pthread_mutex_lock(&mutex_rand);
+    pthread_mutex_lock(&mutex_rand);    //mutex of variable r
 
     if(t==NULL){
         int r=rand()%THREAD_COUNT;  
         while(r==worker_id){
             r=rand()%THREAD_COUNT;
         }
-         pthread_mutex_lock(&mutexs_q[r]);
+         pthread_mutex_lock(&mutexs_q[r]); //mutex of the queue of worker_id
         if(!(queues[r]->index==queues[r]->steal_p)){
             
            
@@ -157,7 +157,7 @@ unsigned int exec_task(task_t *t)
 
 void terminate_task(task_t *t)
 {   
-    pthread_mutex_lock(&mutex2);
+    pthread_mutex_lock(&mutex2); // mutex global
     t->status = TERMINATED;
     
     PRINT_DEBUG(10, "Task terminated: %u\n", t->task_id);
@@ -174,7 +174,7 @@ void terminate_task(task_t *t)
     
     finished++;
     
-    pthread_cond_signal(&checkfinished);
+    pthread_cond_signal(&checkfinished); // condition signal send to main thread to check if all task are finished
     
     pthread_mutex_unlock(&mutex2);
 
@@ -183,7 +183,7 @@ void terminate_task(task_t *t)
 
 void task_check_runnable(task_t *t)
 {
-    pthread_mutex_lock(&mutex_task);
+    pthread_mutex_lock(&mutex_task); //mutex of a task
 #ifdef WITH_DEPENDENCIES
     if(t->task_dependency_done == t->task_dependency_count &&(t->status==WAITING)){
         t->status = READY;

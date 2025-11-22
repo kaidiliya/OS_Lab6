@@ -36,7 +36,7 @@ void free_tasks_queue(tasks_queue_t *q)
 
 void enqueue_task(tasks_queue_t *q, task_t *t)
 {
-    pthread_mutex_lock(&mutex_queue);
+    pthread_mutex_lock(&mutex_queue);//mutex of the queue
 
     if(q->index+1 == q->task_buf_size){
              q->task_buf_size = q->task_buf_size*2;
@@ -51,7 +51,7 @@ void enqueue_task(tasks_queue_t *q, task_t *t)
 
 task_t* dequeue_task(tasks_queue_t *q)
 {
-    pthread_mutex_lock(&mutex_queue);
+    pthread_mutex_lock(&mutex_queue); //mutex of the queue
     while (q->index == 0) {
         pthread_cond_wait(&emptyqueue, &mutex_queue);
     }

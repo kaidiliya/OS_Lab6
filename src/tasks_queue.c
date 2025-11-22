@@ -13,18 +13,17 @@ pthread_cond_t  emptyqueue = PTHREAD_COND_INITIALIZER;
 tasks_queue_t*create_tasks_queue(void)
 {
     for (int i = 0; i < THREAD_COUNT; i++) {
-    pthread_mutex_init(&mutexs_q[i], NULL);
+    pthread_mutex_init(&mutexs_q[i], NULL);  //initialisation of mutex of the queues
     }
 
     
-    tasks_queue_t *q= (tasks_queue_t*) malloc(sizeof(tasks_queue_t)*THREAD_COUNT);
-    for(int i=0;i<THREAD_COUNT;i++){
+    tasks_queue_t *q= (tasks_queue_t*) malloc(sizeof(tasks_queue_t));
+    
 
-    q[i].task_buf_size = QUEUE_CAPACITY;
-    q[i].task_buffer = (task_t**) malloc(sizeof(task_t*) * q[i].task_buf_size);
-    q[i].index = 0;
-    }
-
+    q->task_buf_size = QUEUE_CAPACITY;
+    q->task_buffer = (task_t**) malloc(sizeof(task_t*) * q->task_buf_size);
+    q->index = 0;
+    
     return q;
 }
 
@@ -43,7 +42,7 @@ void free_tasks_queue(tasks_queue_t *q)
 
 void enqueue_task(tasks_queue_t *q, task_t *t,int th_nb)
 {
-    pthread_mutex_lock(&mutexs_q[th_nb]);
+    pthread_mutex_lock(&mutexs_q[th_nb]);//mutex of the queue of th_nb (where th_nb is the thread working)
 
     if(q->index +1 == q->task_buf_size){
              q->task_buf_size = q->task_buf_size*2;
@@ -58,7 +57,7 @@ void enqueue_task(tasks_queue_t *q, task_t *t,int th_nb)
 
 task_t* dequeue_task(tasks_queue_t *q,int th_nb)
 {
-    pthread_mutex_lock(&mutexs_q[th_nb]);
+    pthread_mutex_lock(&mutexs_q[th_nb]);//mutex of the queue of th_nb (where th_nb is the thread working)
     while (q->index == 0) {
         pthread_cond_wait(&emptyqueue, &mutexs_q[th_nb]);
     }

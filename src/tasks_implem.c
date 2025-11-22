@@ -86,7 +86,7 @@ void create_thread_pool(void)
 
 void dispatch_task(task_t *t)
 {
-    pthread_mutex_lock(&mutex_rr);
+    pthread_mutex_lock(&mutex_rr); // mutex of round robin
     int index = round_robin % THREAD_COUNT;
     round_robin++;
     pthread_mutex_unlock(&mutex_rr);
@@ -116,7 +116,7 @@ unsigned int exec_task(task_t *t)
 
 void terminate_task(task_t *t)
 {   
-    pthread_mutex_lock(&mutex_task_op_count);
+    pthread_mutex_lock(&mutex_task_op_count);  // mutex global
     t->status = TERMINATED;
     
     PRINT_DEBUG(10, "Task terminated: %u\n", t->task_id);
@@ -133,7 +133,7 @@ void terminate_task(task_t *t)
     
     finished++;
     
-    pthread_cond_signal(&checkfinished);
+    pthread_cond_signal(&checkfinished);// condition signal send to main thread to check if all task are finished
     
     pthread_mutex_unlock(&mutex_task_op_count);
 
@@ -142,7 +142,7 @@ void terminate_task(task_t *t)
 
 void task_check_runnable(task_t *t)
 {
-pthread_mutex_lock(&mutex_runable);
+pthread_mutex_lock(&mutex_runable); //mutex of a task
 #ifdef WITH_DEPENDENCIES
     if(t->task_dependency_done == t->task_dependency_count &&(t->status==WAITING)){
         t->status = READY;
